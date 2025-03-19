@@ -5,20 +5,21 @@ import { User, onAuthStateChanged, signOut } from "firebase/auth";
 interface AuthContextType {
   user: User | null;
   logout: () => Promise<void>;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(
-    localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")!) : null
-  );
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      setLoading(false);
       if (currentUser) {
-        localStorage.setItem("user", JSON.stringify(currentUser));
+        localStorage.setItem("user", JSON.stringify({ uid: currentUser.uid, email: currentUser.email }));
       } else {
         localStorage.removeItem("user");
       }
@@ -32,7 +33,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem("user");
   };
 
-  return <AuthContext.Provider value={{ user, logout }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, logout, loading }}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => useContext(AuthContext);
