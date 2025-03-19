@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
-import { auth } from '../config/FirebaseConfig'; // Adjust the import path as necessary
+import { auth } from '../config/FirebaseConfig';
 import axios from 'axios';
+import AuthLayout from '../components/AuthLayout';
 
 const Login = () => {
-    const navigate = useNavigate();
+    const setLocation = useNavigate();
     const [authing, setAuthing] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -14,9 +15,9 @@ const Login = () => {
     // Helper function to send the Firebase ID token to your backend
     const sendFirebaseTokenToBackend = async (idToken: string) => {
         try {
-            // The backend expects the token in the "firebaseUid" field of the User object
+            // The backend expects the token in the "verificationToken" field of the User object
             const uri = import.meta.env.VITE_API_URL + '/auth/login';
-            const response = await axios.post(uri, { firebaseUid : idToken });
+            const response = await axios.post(uri, { verificationToken : idToken });
             console.log("User stored in DB:", response.data);
             return response.data;
         } catch (backendError) {
@@ -28,6 +29,7 @@ const Login = () => {
     // Sign in with Google
     const signInWithGoogle = async () => {
         setAuthing(true);
+        setError('');
         try {
             const response = await signInWithPopup(auth, new GoogleAuthProvider());
             // Get Firebase ID token
@@ -36,9 +38,14 @@ const Login = () => {
             console.log(idToken);
             await sendFirebaseTokenToBackend(idToken);
             console.log('User logged in successfully');
-            navigate('/');
+            setLocation('/');
         } catch (err) {
             console.error(err);
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError('An error occurred during Google sign-in');
+            }
             setAuthing(false);
         }
     };
@@ -47,6 +54,13 @@ const Login = () => {
     const signInWithEmail = async () => {
         setAuthing(true);
         setError('');
+        
+        if (!email || !password) {
+            setError('Please enter both email and password');
+            setAuthing(false);
+            return;
+        }
+        
         try {
             const response = await signInWithEmailAndPassword(auth, email, password);
             // Get Firebase ID token
@@ -54,7 +68,7 @@ const Login = () => {
             // Send the token to your backend
             console.log(idToken);
             await sendFirebaseTokenToBackend(idToken);
-            navigate('/');
+            setLocation('/');
         } catch (err: unknown) {
             console.error(err);
             if (err instanceof Error) {
@@ -67,59 +81,74 @@ const Login = () => {
     };
 
     return (
-        <div className='w-full h-screen flex'>
-            <div className='w-1/2 h-full flex flex-col bg-[#282c34] items-center justify-center'>
-                {/* Background styling can go here */}
-            </div>
-            <div className='w-1/2 h-full bg-[#1a1a1a] flex flex-col p-20 justify-center'>
-                <div className='w-full flex flex-col max-w-[450px] mx-auto'>
-                    <div className='w-full flex flex-col mb-10 text-white'>
-                        <h3 className='text-4xl font-bold mb-2'>Login</h3>
-                        <p className='text-lg mb-4'>Welcome Back! Please enter your details.</p>
-                    </div>
-                    <div className='w-full flex flex-col mb-6'>
-                        <input
-                            type='email'
-                            placeholder='Email'
-                            className='w-full text-white py-2 mb-4 bg-transparent border-b border-gray-500 focus:outline-none focus:border-white'
+        <AuthLayout isLoginPage={true}>
+            <div id="login-form">
+                <div className="w-full flex flex-col mb-8">
+                    <h3 className="text-4xl font-bold mb-2 text-gray-900">Welcome Back</h3>
+                    <p className="text-lg mb-4 text-gray-600">Please enter your details to sign in.</p>
+                </div>
+                
+                <div className="w-full flex flex-col mb-6">
+                    <div className="relative mb-4">
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
+                            <i className="fa-regular fa-envelope"></i>
+                        </div>
+                        <input 
+                            type="email" 
+                            placeholder="Email" 
+                            className="w-full py-3 pl-10 pr-3 text-gray-800 bg-white border-b-2 border-gray-200 focus:outline-none focus:border-pink-500 focus:shadow-[0_2px_0_#FF8FAA] rounded-lg transition-all duration-300"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                         />
-                        <input
-                            type='password'
-                            placeholder='Password'
-                            className='w-full text-white py-2 mb-4 bg-transparent border-b border-gray-500 focus:outline-none focus:border-white'
+                    </div>
+                    
+                    <div className="relative mb-4">
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
+                            <i className="fa-solid fa-lock"></i>
+                        </div>
+                        <input 
+                            type="password" 
+                            placeholder="Password" 
+                            className="w-full py-3 pl-10 pr-3 text-gray-800 bg-white border-b-2 border-gray-200 focus:outline-none focus:border-pink-500 focus:shadow-[0_2px_0_#FF8FAA] rounded-lg transition-all duration-300"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                         />
                     </div>
-                    <div className='w-full flex flex-col mb-4'>
-                        <button
-                            className='w-full bg-transparent border border-white text-white my-2 font-semibold rounded-md p-4 text-center flex items-center justify-center cursor-pointer'
-                            onClick={signInWithEmail}
-                            disabled={authing}>
-                            Log In With Email and Password
-                        </button>
-                    </div>
-                    {error && <div className='text-red-500 mb-4'>{error}</div>}
-                    <div className='w-full flex items-center justify-center relative py-4'>
-                        <div className='w-full h-[1px] bg-gray-500'></div>
-                        <p className='text-lg absolute text-gray-500 bg-[#1a1a1a] px-2'>OR</p>
-                    </div>
-                    <button
-                        className='w-full bg-white text-black font-semibold rounded-md p-4 text-center flex items-center justify-center cursor-pointer mt-7'
-                        onClick={signInWithGoogle}
-                        disabled={authing}>
-                        Log In With Google
+                </div>
+                
+                <div className="w-full flex flex-col mb-6">
+                    <button 
+                        className="w-full bg-pink-500 hover:bg-pink-600 text-white font-semibold rounded-full p-3 text-center flex items-center justify-center cursor-pointer transition-all duration-300 shadow-[0_4px_20px_rgba(255,182,193,0.25)]"
+                        onClick={signInWithEmail}
+                        disabled={authing}
+                    >
+                        <i className="fa-solid fa-right-to-bracket mr-2"></i>
+                        Sign In
                     </button>
                 </div>
-                <div className='w-full flex items-center justify-center mt-10'>
-                    <p className='text-sm font-normal text-gray-400'>
-                        Don't have an account? <span className='font-semibold text-white cursor-pointer underline'><a href='/signup'>Sign Up</a></span>
-                    </p>
+                
+                {error && (
+                    <div className="text-red-500 mb-4 bg-red-50 p-3 rounded-lg">
+                        <i className="fa-solid fa-circle-exclamation mr-2"></i>
+                        <span>{error}</span>
+                    </div>
+                )}
+                
+                <div className="w-full flex items-center justify-center relative py-4">
+                    <div className="w-full h-[1px] bg-gray-200"></div>
+                    <p className="text-sm absolute text-gray-500 bg-white px-4">OR</p>
                 </div>
+                
+                <button 
+                    className="w-full bg-white hover:bg-gray-50 text-gray-800 font-semibold rounded-full p-3 text-center flex items-center justify-center cursor-pointer transition-all duration-300 border border-gray-300 shadow-sm mt-4"
+                    onClick={signInWithGoogle}
+                    disabled={authing}
+                >
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" className="w-5 h-5 mr-2" />
+                    Sign In with Google
+                </button>
             </div>
-        </div>
+        </AuthLayout>
     );
 };
 

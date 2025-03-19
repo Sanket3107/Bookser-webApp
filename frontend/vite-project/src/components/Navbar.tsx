@@ -16,9 +16,9 @@ const Navbar = () => {
         <h1 className="text-2xl font-bold text-pink-600 cursor-pointer hover:scale-105 transition-transform duration-300" onClick={() => navigate("/")}>
           BookSer
         </h1>
-        
+
         {/* Navigation Links */}
-        <div className="space-x-6">
+        <div className="hidden md:flex space-x-6">
           <a href="/" className="text-gray-600 hover:text-pink-600 transition-all duration-300 relative group">
             Home
             <span className="absolute left-0 -bottom-1 w-0 h-0.5 bg-pink-600 transition-all duration-300 group-hover:w-full"></span>
@@ -73,10 +73,49 @@ const Navbar = () => {
             className="bg-pink-600 text-white px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 hover:bg-pink-700"
             onClick={() => navigate("/login")}
           >
-            Login / Sign Up
+            Login
           </button>
         )}
+
+        {/* Mobile Menu Button */}
+        <button
+          className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+          onClick={() => setShowDropdown(!showDropdown)}
+        >
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            {showDropdown ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
+        </button>
       </nav>
+
+      {/* Mobile Menu */}
+      {showDropdown && (
+        <div className="md:hidden px-4 pt-2 pb-3 space-y-1 bg-white">
+          <a href="/" className="block px-3 py-2 text-gray-600 hover:text-pink-600 hover:bg-gray-50">
+            Home
+          </a>
+          <a href="/services" className="block px-3 py-2 text-gray-600 hover:text-pink-600 hover:bg-gray-50">
+            Services
+          </a>
+          <a href="/about" className="block px-3 py-2 text-gray-600 hover:text-pink-600 hover:bg-gray-50">
+            About Us
+          </a>
+          {user && (
+            <a href="/dashboard" className="block px-3 py-2 text-gray-600 hover:text-pink-600 hover:bg-gray-50">
+              Dashboard
+            </a>
+          )}
+        </div>
+      )}
     </div>
   );
 };

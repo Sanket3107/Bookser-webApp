@@ -1,14 +1,14 @@
 package com.booking.book.DTO;
 
 public class FirebaseLoginRequest {
-    private String firebaseUid;
+    private String verificationToken;
 
     // Getters and setters
-    public String getFirebaseUid() {
-        return firebaseUid;
+    public String getVerificationToken() {
+        return verificationToken;
     }
 
-    public void setFirebaseUid(String firebaseUid) {
-        this.firebaseUid = firebaseUid;
+    public void setVerificationToken(String verificationToken) {
+        this.verificationToken = verificationToken;
     }
 }

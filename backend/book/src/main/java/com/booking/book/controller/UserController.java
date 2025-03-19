@@ -30,14 +30,14 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<?> createOrUpdateFirebaseUser(@RequestBody FirebaseLoginRequest firebaseLoginRequest) {
         try{
-            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(firebaseLoginRequest.getFirebaseUid());
+            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(firebaseLoginRequest.getVerificationToken()); //this verificationToken is the token we get from the frontend and using it we get the firebaseUid and email
             String firebaseUid = decodedToken.getUid();
             String email = decodedToken.getEmail();
 
             User updatedUser = userService.createOrUpdateFirebaseUser(firebaseUid, email);
             return ResponseEntity.ok(updatedUser);
         }catch(FirebaseAuthException e){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Firebase ID token");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Firebase Verification ID token");
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Server error: " + e.getMessage());
